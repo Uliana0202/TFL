@@ -88,8 +88,14 @@ def main():
             table[0].append(counterexample[:i])
             for j in range(1, len(table)):
                 table[j].append(is_member(table[j][0] + counterexample[:i]))
+                
+        if len(counterexample) > 2*len(table[-1][0]):
+            coef_extension += 1
+        else:
+            coef_extension = 1
 
     print_table(table, start_extension)
 
 if __name__ == '__main__':
     main()
+
