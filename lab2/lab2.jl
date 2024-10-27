@@ -112,6 +112,11 @@ function main()
                 push!(table[j], is_member(table[j][1] * counterexample[1:i]))
             end
         end
+        if length(counterexample) > 2 * length(table[end][1])
+            coef_extension += 1
+        else
+            coef_extension = 1
+        end
     end
     print_table(table, start_extension)
 end
