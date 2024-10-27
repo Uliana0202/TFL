@@ -28,14 +28,35 @@ function print_table(table, start_extension)
             println("____________")
         end
         for j in 1:length(table[1])
-            print(rpad("\"" * table[i][j] * "\"", 5))
+            print(rpad("\"" * table[i][j] * "\"", 10))
         end
         println()
     end
     println()
 end
 
-function solve_incompleteness!(table, pos_unchecked, start_extension)
+function generate_strings(len, current_string="")
+    if len == 0
+        return [current_string]
+    end
+    strings = []
+    for c in ['L', 'R']
+        append!(strings, generate_strings(len - 1, current_string * c))
+    end
+    return strings
+end
+
+function make_extension!(table, pref, n)
+    for i in 1:n
+        strings = generate_strings(i)
+        for s in strings
+            push!(table, fill("0", size(table[1])))
+            table[end][1] = pref * s
+        end
+    end
+end
+
+function solve_incompleteness!(table, pos_unchecked, start_extension, coef_extension)
     start_extension_0 = start_extension
     while true
         for i in pos_unchecked:length(table)
@@ -55,14 +76,14 @@ function solve_incompleteness!(table, pos_unchecked, start_extension)
         if start_extension == start_extension_0
             return true, start_extension
         end
-        for i in 1:(start_extension - start_extension_0)
-            push!(table, ["0" for _ in 1:length(table[1])])
-            table[end][1] = table[start_extension_0 + i - 1][1] * "L"
-            push!(table, ["0" for _ in 1:length(table[1])])
-            table[end][1] = table[start_extension_0 + i - 1][1] * "R"
+        
+        len_0 = length(table)
+        for i in 0:(start_extension - start_extension_0 - 1)
+            make_extension!(table, table[start_extension_0 + i][1], coef_extension)
         end
-        full_rows!(table, length(table) - 2 * (start_extension - start_extension_0) + 1)
-        flag, start_extension = solve_incompleteness!(table, length(table) - 2 * (start_extension - start_extension_0) + 1, start_extension)
+        
+        full_rows!(table, len_0 + 1)
+        flag, start_extension = solve_incompleteness!(table, length(table) - 2 * (start_extension - start_extension_0) + 1, start_extension, coef_extension)
         if flag
             return true, start_extension
         end
@@ -72,15 +93,15 @@ end
 function main()
     table = [
         ["", ""],
-        ["", "0"],
-        ["L", "0"],
-        ["R", "0"]
+        ["", "0"]
     ]
+    coef_extension = 1
     start_extension = 3
+    make_extension!(table, table[1][2], coef_extension)
     full_rows!(table, 2)
     
     while true
-        _, start_extension = solve_incompleteness!(table, start_extension, start_extension)
+        _, start_extension = solve_incompleteness!(table, start_extension, start_extension, coef_extension)
         guessed, counterexample = is_equivalent(table, start_extension)
         if guessed
             break
