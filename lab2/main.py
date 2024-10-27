@@ -17,11 +17,28 @@ def print_table(table,start_extension):
         if i == start_extension:
             print("____________")
         for j in range(len(table[0])):
-            print('{:>5}'.format("\"" + table[i][j] +"\""), end="")
+            print('{:>10}'.format("\"" + table[i][j] +"\""), end="")
         print()
     print()
 
-def solve_incompleteness(table, pos_unchecked, start_extension):
+def generate_strings(len, current_string):
+    if len == 0:
+        return [current_string]
+
+    strings = []
+    for c in ['L', 'R']:
+        strings.extend(generate_strings(len - 1, current_string + c))
+
+    return strings
+def make_extension(table, pref, n):
+    for i in range(n):
+        strings = generate_strings(i+1, "")
+        for s in strings:
+            table.append(["0" for _ in range(len(table[0]))])
+            table[-1][0] = pref + s
+
+
+def solve_incompleteness(table, pos_unchecked, start_extension, coef_extension):
     start_extension_0 = start_extension
     while True:
         for i in range(pos_unchecked, len(table)):
@@ -39,29 +56,29 @@ def solve_incompleteness(table, pos_unchecked, start_extension):
         if start_extension == start_extension_0:
             return True, start_extension
 
+        len_0 = len(table)
         for i in range(start_extension - start_extension_0):
-            table.append(["0" for _ in range(len(table[0]))])
-            table[-1][0] = table[start_extension_0 + i][0] + "L"
-            table.append(["0" for _ in range(len(table[0]))])
-            table[-1][0] = table[start_extension_0 + i][0] + "R"
+            make_extension(table, table[start_extension_0 + i][0], coef_extension)
 
-        full_rows(len(table) - 2 * (start_extension - start_extension_0), table)
+        full_rows(len_0, table)
 
-        flag, start_extension = solve_incompleteness(table, len(table) - 2 * (start_extension - start_extension_0), start_extension)
+        flag, start_extension = solve_incompleteness(table, len(table) - 2 * (start_extension - start_extension_0), start_extension, coef_extension)
         if flag:
             return True, start_extension
+
+
 def main():
     table = [
         ["", ""],
-        ["", "0"],
-        ["L", "0"],
-        ["R", "0"]
+        ["", "0"]
     ]
+    coef_extension = 1
     start_extension = 2
+    make_extension(table, table[0][1], coef_extension)
     full_rows(1, table)
 
     while True:
-        _, start_extension = solve_incompleteness(table, start_extension, start_extension)
+        _, start_extension = solve_incompleteness(table, start_extension, start_extension, coef_extension)
         guessed, counterexample = is_equivalent(table, start_extension)
 
         if guessed:
@@ -76,4 +93,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
