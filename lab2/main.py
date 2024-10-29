@@ -28,13 +28,18 @@ def generate_strings(len, current_string):
     for c in ['L', 'R']:
         strings.extend(generate_strings(len - 1, current_string + c))
     return strings
+    
 def make_extension(table, pref, n):
+    extended = 0
     for i in range(n):
         strings = generate_strings(i + 1, "")
         for s in strings:
             table.append(["0" for _ in range(len(table[0]))])
             table[-1][0] = pref + s
-        full_rows(len(table) - 2**n, table)
+            extended += 1
+        full_rows(len(table) - len(strings), table)
+    return extended
+    
 def does_not_meet(table, finish, row):
     for i in range(1, finish):
         if table[i][1:] == row:
@@ -53,30 +58,31 @@ def solve_incompleteness(table, pos_unchecked, start_extension, coef_ext):
         if start_extension == start_extension_0:
             return True, start_extension
 
+        extended = 0
         for i in range(start_extension - start_extension_0):
-            make_extension(table, table[start_extension_0 + i][0], coef_ext)
+            extended += make_extension(table, table[start_extension_0 + i][0], coef_ext)
 
-        flag, start_extension = solve_incompleteness(table, len(table) - 2 * (start_extension - start_extension_0), start_extension, coef_ext)
+        flag, start_extension = solve_incompleteness(table, len(table) - extended, start_extension, coef_ext)
         if flag:
             return True, start_extension
 def main():
-    num_of_vertices = 16  ################### Read from a file
+    num_of_vertices = 160  ################### Read from a file
     table = [
         ["", ""],
-        ["", "0"],
-        ["L", "0"],
-        ["R", "0"]
+        ["", "0"]
     ]
-    full_rows(1, table)
+    table[1][1] = is_member("")
+    make_extension(table, table[1][0], 1)
     start_extension = 2
     print_table(table, start_extension)
 
+
     requirement_for_extra = 5*(start_extension - 1) < num_of_vertices
-    start_extra = start_extension
     len_extra = len(table[-1][0])
 
     while True:
         _, start_extension = solve_incompleteness(table, start_extension, start_extension, 1)
+        start_extra = start_extension
         print_table(table, start_extension)
 
         # SxSigma быстро возрастает, поэтому ставлю предел в 2 дополительных расширения
@@ -86,11 +92,10 @@ def main():
             extended = 0
             for j in range(start_extra, len_0):
                 if len(table[j][0]) >= len_extra:
-                    make_extension(table, table[j][0], 1)
-                    extended += 1
+                    extended += make_extension(table, table[j][0], 1)
             counter += 1
-            start_extra = len(table) - 2*extended
-            _, start_extension = solve_incompleteness(table, start_extension, start_extension, counter)
+            start_extra = len(table) - extended
+            _, start_extension = solve_incompleteness(table, start_extra, start_extension, counter)
             len_extra += 1
 
         start_extra = len(table) # Дальше дополнительно расширять мне надо только те части таблицы, которые получились из нового класса и дописанных L, R
@@ -108,6 +113,6 @@ def main():
 
     print_table(table, start_extension)
 
+
 if __name__ == '__main__':
     main()
-
