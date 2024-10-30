@@ -4,7 +4,6 @@ def is_equivalent(table, start_extension):
     flag = input()
     counterexample = input()
     return flag, counterexample
-    
 def is_member(str):
     return input(f"Does \"{str}\" help to escape? ")
 
@@ -12,8 +11,6 @@ def full_rows(start_pref, table):
     for i in range(start_pref, len(table)):
         for j in range(1, len(table[0])):
             table[i][j] = is_member(table[i][0] + table[0][j])
-            if table[i][j] == "1":
-                break
 
 def print_table(table,start_extension):
     for i in range(len(table)):
@@ -23,6 +20,7 @@ def print_table(table,start_extension):
             print('{:>10}'.format("\"" + table[i][j] +"\""), end="")
         print()
     print()
+
 
 def generate_strings(n, current_string):
     if n == 0:
@@ -108,6 +106,7 @@ def main():
         while requirement_for_extra and counter < 4:
             for i in range(start_extra, start_extension):
                 make_checked_extension(table, table[i][0], counter, i)
+                print_table(table, start_extension)
             _, start_extension = solve_incompleteness(table, start_extra, start_extension, counter)
             counter += 1
 
@@ -127,6 +126,7 @@ def main():
                 #После попадания в финальное состояние дополнительные инструкции не должны содержаться
                 if table[i][j] == "1":
                     break
+
 
     print_table(table, start_extension)
 
