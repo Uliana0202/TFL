@@ -12,9 +12,7 @@ function is_member(str)
   return  res
 end
 
-
-
-function full_rows!(table, start_pref)
+function full_rows!(start_pref, table)
     for i in start_pref:length(table)
         for j in 2:length(table[1])
             table[i][j] = is_member(table[i][1] * table[1][j])
@@ -35,7 +33,7 @@ function print_table(table, start_extension)
     println()
 end
 
-function generate_strings(len, current_string="")
+function generate_strings(len, current_string)
     if len == 0
         return [current_string]
     end
@@ -46,81 +44,133 @@ function generate_strings(len, current_string="")
     return strings
 end
 
-function make_extension!(table, pref, n)
-    for i in 1:n
-        strings = generate_strings(i)
-        for s in strings
-            push!(table, fill("0", size(table[1])))
-            table[end][1] = pref * s
+function does_not_meet_pref(table, pref, start)
+    for i in start:length(table)
+        if table[i][1] == pref
+            return false
         end
     end
+    return true
 end
 
-function solve_incompleteness!(table, pos_unchecked, start_extension, coef_extension)
+function make_checked_extension!(table, pref, n, start)
+    strings = generate_strings(n, "")
+    extended = 0
+    for s in strings
+        if does_not_meet_pref(table, pref * s, start)
+            push!(table, ["0" for _ in 1:length(table[1])])
+            table[end][1] = pref * s
+            extended += 1
+        end
+    end
+    full_rows!(length(table) - extended + 1, table)
+    return extended
+end
+
+function make_extension!(table, pref, n)
+    strings = generate_strings(n, "")
+    for s in strings
+        push!(table, fill("0", size(table[1])))
+        table[end][1] = pref * s
+    end
+    full_rows!(length(table) - length(strings) + 1, table) 
+    return length(strings)
+end
+
+function does_not_meet_row(table, finish, row)
+  for i in 2:finish
+    if table[i][2:end] == row
+      return false
+    end
+  end
+  return true
+end
+
+function solve_incompleteness!(table, pos_unchecked, start_extension, coef_ext)
     start_extension_0 = start_extension
     while true
         for i in pos_unchecked:length(table)
-            do_not_meet = true
-            j = 1
-            while j < start_extension && do_not_meet
-                if table[i][2:end] == table[j][2:end]
-                    do_not_meet = false
-                end
-                j += 1
-            end
-            if do_not_meet
+            if does_not_meet_row(table, start_extension - 1, table[i][2:end])
                 table[i], table[start_extension] = table[start_extension], table[i]
                 start_extension += 1
             end
         end
+        
         if start_extension == start_extension_0
             return true, start_extension
         end
-        
-        len_0 = length(table)
-        for i in 0:(start_extension - start_extension_0 - 1)
-            make_extension!(table, table[start_extension_0 + i][1], coef_extension)
+    
+        extended = 0
+        for i in start_extension_0:(start_extension - 1)
+            extended += make_extension!(table, table[i][1], 1)
+            if coef_ext > 1
+                for j in 2:(coef_ext + 1)
+                    extended += make_checked_extension!(table, table[i][1], coef_ext, i)
+                end
+            end
         end
-        
-        full_rows!(table, len_0 + 1)
-        flag, start_extension = solve_incompleteness!(table, length(table) - 2 * (start_extension - start_extension_0) + 1, start_extension, coef_extension)
+
+    
+        flag, start_extension = solve_incompleteness!(table, length(table) - extended, start_extension, coef_ext)
         if flag
             return true, start_extension
         end
     end
 end
 
-function main()
-    table = [
-        ["", ""],
-        ["", "0"]
-    ]
-    coef_extension = 1
-    start_extension = 3
-    make_extension!(table, table[1][2], coef_extension)
-    full_rows!(table, 2)
+
+open("parameters.txt", "r") do file
+    global num_of_vertices = parse(Int, split(strip(readline(file)))[1])
+end
+println(num_of_vertices)
+table = [
+    ["", ""],
+    ["", "0"],
+    ["L", "0"],
+    ["R", "0"]
+]
     
-    while true
-        _, start_extension = solve_incompleteness!(table, start_extension, start_extension, coef_extension)
-        guessed, counterexample = is_equivalent(table, start_extension)
-        if guessed
-            break
+full_rows!(2, table)
+start_extension = 3
+
+requirement_for_extra = 5 * (start_extension - 2) < num_of_vertices
+start_extra = 2
+    
+    
+while true
+    global start_extension, start_extra
+    _, start_extension = solve_incompleteness!(table, start_extension, start_extension, 1)
+    counter = 2
+    
+    while requirement_for_extra && counter < 4
+        for i in start_extra:(start_extension - 1)
+            make_checked_extension!(table, table[i][1], counter, i)
         end
-        for i in 1:length(counterexample)
-            push!(table[1], counterexample[1:i])
-            for j in 2:length(table)
-                push!(table[j], is_member(table[j][1] * counterexample[1:i]))
+        
+        _, start_extension = solve_incompleteness!(table, start_extra, start_extension, counter)
+        counter += 1
+    end
+    
+    start_extra = start_extension
+    guessed, counterexample = is_equivalent(table, start_extension)
+        
+    if guessed
+        break
+    end
+        
+    for i in 1:length(counterexample)
+        push!(table[1], counterexample[1:i])
+    end
+        
+    for i in 2:length(table)
+        append!(table[i], ["0" for _ in 1:length(counterexample)])
+        for j in (length(table[1]) - length(counterexample) + 1):length(table[1])
+            table[i][j] = is_member(table[i][1] * table[1][j])
+            if table[i][j] == "1"
+                break
             end
         end
-        if length(counterexample) > 2 * length(table[end][1])
-            coef_extension += 1
-        else
-            coef_extension = 1
-        end
     end
-    print_table(table, start_extension)
 end
 
-if abspath(PROGRAM_FILE) == @__FILE__
-    main()
-end
+print_table(table, start_extension)
