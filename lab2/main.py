@@ -84,7 +84,7 @@ def solve_incompleteness(table, pos_unchecked, start_extension, coef_ext):
             return True, start_extension
 def main():
     with open("parameters.txt", 'r') as file:
-        num_of_vertices = file.readline().strip().split()[0]
+        num_of_vertices = int(file.readline().strip().split()[0])
 
     table = [
         ["", ""],
@@ -99,14 +99,13 @@ def main():
     start_extra = 1
 
     while True:
-        _, start_extension = solve_incompleteness(table, start_extra, start_extension, 1)
+        _, start_extension = solve_incompleteness(table, start_extension, start_extension, 1)
 
         counter = 2
         # SxSigma быстро возрастает, поэтому ставлю предел в 2 дополнительных  расширения
         while requirement_for_extra and counter < 4:
             for i in range(start_extra, start_extension):
                 make_checked_extension(table, table[i][0], counter, i)
-                print_table(table, start_extension)
             _, start_extension = solve_incompleteness(table, start_extra, start_extension, counter)
             counter += 1
 
@@ -126,7 +125,6 @@ def main():
                 #После попадания в финальное состояние дополнительные инструкции не должны содержаться
                 if table[i][j] == "1":
                     break
-
 
     print_table(table, start_extension)
 
