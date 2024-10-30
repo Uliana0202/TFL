@@ -116,15 +116,12 @@ def main():
             break
 
         for i in range(1, len(counterexample)+1):
-            table[0].append(counterexample[:i])
+            table[0].append(counterexample[-i:])
 
         for i in range(1, len(table)):
             table[i].extend(["0"] * len(counterexample))
             for j in range(len(table[0]) - len(counterexample), len(table[0])):
                 table[i][j] = is_member(table[i][0] + table[0][j])
-                #После попадания в финальное состояние дополнительные инструкции не должны содержаться
-                if table[i][j] == "1":
-                    break
 
     print_table(table, start_extension)
 
