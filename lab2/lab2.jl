@@ -122,7 +122,7 @@ end
 open("parameters.txt", "r") do file
     global num_of_vertices = parse(Int, split(strip(readline(file)))[1])
 end
-println(num_of_vertices)
+
 table = [
     ["", ""],
     ["", "0"],
@@ -159,16 +159,13 @@ while true
     end
         
     for i in 1:length(counterexample)
-        push!(table[1], counterexample[1:i])
+        push!(table[1], counterexample[end - i + 1:end])
     end
         
     for i in 2:length(table)
         append!(table[i], ["0" for _ in 1:length(counterexample)])
         for j in (length(table[1]) - length(counterexample) + 1):length(table[1])
             table[i][j] = is_member(table[i][1] * table[1][j])
-            if table[i][j] == "1"
-                break
-            end
         end
     end
 end
